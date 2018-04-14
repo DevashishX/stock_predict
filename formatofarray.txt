@@ -15,3 +15,8 @@ features array format:
 #or however you want, but we will have to carry forward data for one day
 
 columns: 1, mean, mean^2, ....., mean^10, time, time^2, ...., time^10, ..., mean*time, mean^2*time, mean*time^2,... 
+
+target array:
+different arrays of one column and many rows of opening price, closing, etc
+opening, closing, peak, low
+4 are enough

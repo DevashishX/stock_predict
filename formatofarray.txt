@@ -1,0 +1,17 @@
+market: nyse or nasdaq
+mean: (index) dowjones or nasdaq composite (like sensex)
+#my suggestion is go for nasdaq index cause all the major companies are listed on nasdaq
+#nasdaq(like bombay stocl exchange) is electronically controlled 
+#while nyse is manually controlled(old style trading with paper, pen and cash)
+#nasdaq also has subindexes of specific sectors
+#its also possible to get means of different markets (if possible, but nasdaq is must)
+#lets start with these companies
+comapnies: WIKI/AAPL, WIKI/AMZN, WIKI/FB, WIKI/GOOG, WIKI/YHOO
+features array format:
+#keep in mind that 
+#A
+#mean = mean closing of the previous day, so will have to get data of n+1 days and then shift it 
+#[0:n] -> [1:n+1]
+#or however you want, but we will have to carry forward data for one day
+
+columns: 1, mean, mean^2, ....., mean^10, time, time^2, ...., time^10, ..., mean*time, mean^2*time, mean*time^2,... 

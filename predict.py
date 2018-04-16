@@ -1,17 +1,13 @@
-from sklearn.linear_model import Ridge, Lasso, LinearRegression
+from sklearn.linear_model import Ridge, Lasso, LinearRegression, RidgeCV
 from sklearn.model_selection import cross_validate, cross_val_predict, cross_val_score, KFold
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler, RobustScaler, StandardScaler
 from sklearn.preprocessing import PolynomialFeatures, Normalizer
-from sklearn.datasets import make_regression
-from sklearn.datasets import load_boston
+from sklearn.datasets import make_regression, load_boston
+from sklearn.neural_network import MLPRegressor
 from sklearn.decomposition import PCA
 import numpy as np
 import matplotlib.pyplot as plt
-
-
-class result():
-    pass
 
 
 def scale_data(X_train, X_test, X_today, classtype="StandardScaler"):
@@ -60,70 +56,116 @@ def PCA_pre(X, n=20):
     return pca.transform(X)
 
 
-def norm_pre(X_train, X_today=None):
+def norm_pre(X_train):
     norm = Normalizer()
     norm.fit(X_train)
-    # if(X_today != None):
-    # return norm.transform(X_train), norm.transform(X_today)
-    # else:
     return norm.transform(X_train)
+
+
+def nonlin_comp(X):
+    m = X.shape[1]
+    m = int(m / 10)
+    shrink = PCA_pre(X, n=m)
+    shrink_sin = np.sin(shrink)
+    shrink_cos = np.cos(shrink)
+    return np.c_[X, shrink_sin, shrink_cos]
+
+
+def plot(classifier, X, y, title="data"):
+    # b: blue g: green r: red c: cyan m: magenta y: yellow k: black w: white
+    l1 = plt.plot(y)
+    l2 = plt.plot(classifier.predict(X))
+    plt.setp(l1, label='Real', color='b', lw=1, ls='-', marker='+', ms=1.5)
+    plt.setp(l2, label='Prediction', color='r',
+             lw=1, ls='--', marker='o', ms=1.5)
+    plt.title(title)
+    plt.ylabel("Target")
+    plt.xlabel("Sample Number")
+    plt.legend()
+    plt.show()
 
 
 def fit_algo(X_train, X_test, y_train, y_test, algotype="Ridge"):
     """fit the given algorithm to given data, returns an object or type classifier"""
-    train_list = [[], []]
-    test_list = [[], []]
+    train_list = []
+    test_list = []
     print("using:", algotype)
 
     if(algotype == "Ridge"):
         algotype = Ridge(alpha=0.1, max_iter=20000)
+
     elif(algotype == "Lasso"):
         algotype = Lasso(alpha=0.1, max_iter=20000)
         classifier = algotype.fit(X_train, y_train)
-        print(classifier.score(X_test, y_test))
+        print("train score: ", classifier.score(X_train, y_train),
+              "test score: ", classifier.score(X_test, y_test))
         return classifier
+
     elif(algotype == "LinearRegression"):
         algotype = LinearRegression()
         classifier = algotype.fit(X_train, y_train)
-        print(classifier.score(X_test, y_test))
+        print("train score: ", classifier.score(X_train, y_train),
+              "test score: ", classifier.score(X_test, y_test))
         return classifier
+
     elif(algotype == "Ridge1"):
         algotype = Ridge(alpha=1, max_iter=20000)
         classifier = algotype.fit(X_train, y_train)
-        print(classifier.score(X_test, y_test))
+        print("train score: ", classifier.score(X_train, y_train),
+              "test score: ", classifier.score(X_test, y_test))
         return classifier
+
     elif(algotype == "Ridge0.1"):
         algotype = Ridge(alpha=0.1, max_iter=20000)
         classifier = algotype.fit(X_train, y_train)
-        print(classifier.score(X_test, y_test))
+        print("train score: ", classifier.score(X_train, y_train),
+              "test score: ", classifier.score(X_test, y_test))
         return classifier
+
     elif(algotype == "Ridge0.01"):
         algotype = Ridge(alpha=0.01, max_iter=20000)
         classifier = algotype.fit(X_train, y_train)
-        print(classifier.score(X_test, y_test))
+        print("train score: ", classifier.score(X_train, y_train),
+              "test score: ", classifier.score(X_test, y_test))
         return classifier
 
-    for i in range(-20, 21):
-        alpha_calc = float(float(i) / 10.0)
-        algotype = Ridge(alpha=alpha_calc, max_iter=20000)
+    elif(algotype == "RidgeCV"):
+        cv_array = [float(float(i) / 100.0) for i in range(-100, 1000)]
+        cv_array[cv_array.index(0)] = 0.1
+        algotype = RidgeCV(cv_array)
+        classifier = algotype.fit(X_train, y_train)
+        print("train score: ", classifier.score(X_train, y_train),
+              "test score: ", classifier.score(X_test, y_test))
+        return classifier
+
+    cv_array = [float(float(i) / 100.0) for i in range(-1000, 1000)]
+    print(max(cv_array), min(cv_array))
+    for i in cv_array:
+        algotype = Ridge(alpha=i, max_iter=20000)
         classifier = algotype.fit(X_train, y_train)
         train_score = classifier.score(X_train, y_train)
         test_score = classifier.score(X_test, y_test)
-        train_list[0].append(train_score)
-        train_list[1].append(alpha_calc)
-        test_list[0].append(test_score)
-        test_list[1].append(alpha_calc)
+        train_list.append(train_score)
+        test_list.append(test_score)
 
-    optimal_score = max(test_list[0])
-    optimal_score_index = test_list[0].index(optimal_score)
-    final_alpha = float(test_list[1][optimal_score_index])
+    optimal_score = max(train_list)
+    optimal_score_index = train_list.index(optimal_score)
+    final_alpha = cv_array[train_list.index(optimal_score)]
     algotype = Ridge(alpha=final_alpha, max_iter=20000)
-    print("final alpha:", final_alpha, train_list[0][optimal_score_index],
-          test_list[0][optimal_score_index], sep="\t")
-    #print(train_list[optimal_score_index], max(test_list), sep="\n")
-    # plt.plot(train_list)
-    # plt.plot(test_list)
-    # plt.show()
+    print("alpha:", final_alpha, optimal_score, test_list[optimal_score_index])
+
+    return classifier
+
+
+def fit_neural_network(X_train, X_test, y_train, y_test, activation="relu",
+                       network_structure=(10, 10), learn_rate=0.001, iter=20000):
+    NN = MLPRegressor(hidden_layer_sizes=network_structure,
+                      learning_rate_init=learn_rate, max_iter=iter, )
+    classifier = NN.fit(X_train, y_train)
+    print("The score for train set is: {}".format(
+        classifier.score(X_train, y_train)))
+    print("The score for test set is: {}".format(
+        classifier.score(X_test, y_test)))
     return classifier
 
 
@@ -131,36 +173,33 @@ def main():
     #samples = int(input("Number of Samples: "))
     #X, y = make_regression(n_samples=samples)
     bunch = load_boston(return_X_y=True)
-    X = np.array(bunch[0])
-    y = np.array(bunch[1])
+    X = np.array(bunch[0], dtype=np.float64)
+    y = np.array(bunch[1], dtype=np.float64)
 
-    X = poly_pre(X, 3)
-    #X = norm_pre(X)
-    #X = PCA_pre(X, )
+    X = nonlin_comp(X)
+    X = poly_pre(X, 2)
 
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, shuffle=True, stratify=None, test_size=0.2, random_state=42)
+        X, y, shuffle=True, stratify=None, test_size=0.25, random_state=42)
 
     X_today = X_train[-1:, :].reshape(-1, X_train.shape[1])
 
-    X_train, X_test, X_today = scale_data(X_train, X_test, X_today, "MinMax")
+    X_train, X_test, X_today = scale_data(
+        X_train, X_test, X_today, "StandardScaler")
 
-    classifier = fit_algo(X_train, X_test, y_train, y_test, "Ridge")
+    classifier = fit_neural_network(
+        X_train, X_test, y_train, y_test, network_structure=(200, 200), activation="relu")
+    # classifier = fit_algo(X_train, X_test, y_train,
+    #                      y_test, algotype="RidgeCV")
 
-    k = KFold(n_splits=5, shuffle=True, random_state=42)
-    print(cross_val_score(classifier, X, y, cv=k),
+    k = KFold(n_splits=5, shuffle=False, random_state=42)
+    print(np.mean(cross_val_score(classifier, X_test, y_test, cv=k)),
           classifier.predict(X_today), sep="\t")
 
     print(X_train.shape, X_test.shape, y_train.shape, y_test.shape)
 
-    l1 = plt.plot(y_test, 'b--', linewidth=1, label="Real")
-    l2 = plt.plot(classifier.predict(X_test), 'o--',
-                  linewidth=1, )
-    plt.setp(l1, label='Real', color='b', lw=1, ls='-', marker='+', ms=1.5)
-    plt.setp(l2, label='Prediction', color='r',
-             lw=1, ls='--', marker='o', ms=1.5)
-    plt.legend()
-    plt.show()
+    plot(classifier, X_train, y_train, "train plot")
+    plot(classifier, X_test, y_test, "test plot")
 
 
 if __name__ == "__main__":

@@ -6,8 +6,8 @@ from sklearn.preprocessing import PolynomialFeatures, Normalizer
 from sklearn.datasets import make_regression, load_boston
 from sklearn.neural_network import MLPRegressor
 from sklearn.decomposition import PCA
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def scale_data(X_train, X_test, X_today, classtype="StandardScaler"):

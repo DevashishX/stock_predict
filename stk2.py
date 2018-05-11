@@ -2,8 +2,8 @@ import datetime as dt
 import pandas as pd
 import pandas_datareader as web
 from yahoo_finance import Share
-from rtstock.stock import Stock
 from twstock import Stock
+from rtstock.stock import Stock
 
 today = dt.datetime.today()
 two_yrs_ago = today - dt.timedelta(days=2 * 365)

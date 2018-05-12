@@ -8,6 +8,7 @@ from sklearn.neural_network import MLPRegressor
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 import numpy as np
+import stk
 
 
 def scale_data(X_train, X_test, X_today, classtype="StandardScaler"):
@@ -23,7 +24,7 @@ def scale_data(X_train, X_test, X_today, classtype="StandardScaler"):
     X_test_scaled = np.ones((rows_test, 1))
     X_today_scaled = np.ones((rows_today, 1))
 
-    #X_train, X_test = norm_pre(X_train, X_test)
+    # X_train, X_test = norm_pre(X_train, X_test)
 
     if(classtype == "MinMax"):
         scaler = MinMaxScaler(feature_range=(-3, 3))
@@ -45,7 +46,7 @@ def scale_data(X_train, X_test, X_today, classtype="StandardScaler"):
 
 
 def poly_pre(X, n):
-    poly = PolynomialFeatures(n, interaction_only=True)
+    poly = PolynomialFeatures(n, interaction_only=False)
     poly.fit(X)
     return poly.transform(X)
 
@@ -83,6 +84,44 @@ def plot(classifier, X, y, title="data"):
     plt.xlabel("Sample Number")
     plt.legend()
     plt.show()
+
+
+def plotchange(Window, classifier, X, y, title="data"):
+    # b: blue g: green r: red c: cyan m: magenta y: yellow k: black w: white
+    l1 = Window.a1.plot(y, label='Real', color='b',
+                        lw=1, ls='-', marker='+', ms=1.5, zorder=3)
+    l2 = Window.a1.plot(classifier.predict(X), label='Prediction', color='r',
+                        lw=1, ls='--', marker='o', ms=1.5, zorder=3)
+    # Window.a1.setp(l1, )
+    # Window.a1.setp(l2, )
+    Window.a1.set_title(title)
+    Window.a1.set_ylabel("Target")
+    Window.a1.set_xlabel("Sample/Day Number")
+    Window.a1.legend()
+    Window.a1.grid()
+    # Window.a1.show()
+
+
+def fit_company_change(name):
+    #2337, 2330, 6223, 6220
+    X_close, X_index, X_close_index, y_close, y_index, y_close_index = ProperReturn(
+        name)
+    X = X_close_index
+    y = y_close_index
+    X = nonlin_comp(X)
+    X = poly_pre(X, 5)
+    # X_train, X_test, y_train, y_test = train_test_split(
+    #   X, y, shuffle=False, stratify=None, test_size=0.001, random_state=42)
+    X_train = X_test = X
+    X_today = X[-1:, :].reshape(-1, X.shape[1])
+    X_train, X_test, X_today = scale_data(
+        X_train, X_test, X_today, "MinMax")
+    retx = X_train
+    #np.r_[X_test, X_train]
+    # scaler = StandardScaler()
+    # scaler.fit(X)
+    # retx = scaler.transform(X)
+    return retx, y
 
 
 def fit_algo(X_train, X_test, y_train, y_test, algotype="Ridge"):
@@ -169,37 +208,64 @@ def fit_neural_network(X_train, X_test, y_train, y_test, activation="relu",
     return classifier
 
 
-def main():
-    #samples = int(input("Number of Samples: "))
-    #X, y = make_regression(n_samples=samples)
-    bunch = load_boston(return_X_y=True)
-    X = np.array(bunch[0], dtype=np.float64)
-    y = np.array(bunch[1], dtype=np.float64)
+def ProperReturn(name):
+    close, index, close_index = stk.csv_to_df(name)
+    close = np.array(close, dtype=np.float64)
+    index = np.array(index, dtype=np.float64)
+    close_index = np.array(close_index, dtype=np.float64)
+    y_close = close[1:, :]
+    y_index = index[1:, :]
+    close_index = close_index[1:, :]
+    collength = y_close.shape[0]
+    X_close = X_index = np.arange(0, collength).reshape(-1, 1)
+    y_close_index = close_index[:, 0].reshape(-1, 1)
+    X_close_index = close_index[:, 1].reshape(-1, 1)
+    X_close_index = np.c_[X_close_index,
+                          np.arange(0, collength).reshape(-1, 1)]
 
+    return X_close, X_index, X_close_index, y_close, y_index, y_close_index
+
+
+def fit_company(name):
+    #2337, 2330, 6223, 6220
+    X_close, X_index, X_close_index, y_close, y_index, y_close_index = ProperReturn(
+        name)
+    X = X_close_index
+    y = y_close_index
     X = nonlin_comp(X)
-    X = poly_pre(X, 2)
-
+    X = poly_pre(X, 5)
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, shuffle=True, stratify=None, test_size=0.25, random_state=42)
-
-    X_today = X_train[-1:, :].reshape(-1, X_train.shape[1])
-
+    X_today = X[-1:, :].reshape(-1, X.shape[1])
     X_train, X_test, X_today = scale_data(
-        X_train, X_test, X_today, "StandardScaler")
+        X_train, X_test, X_today, "MinMax")
+    # classifier = fit_neural_network(
+    #   X_train, X_test, y_train.ravel(), y_test.ravel(), network_structure=(10, 10), activation="relu")
+    classifier = fit_algo(X_train, X_test, y_train,
+                          y_test, algotype="RidgeCV")
 
-    classifier = fit_neural_network(
-        X_train, X_test, y_train, y_test, network_structure=(200, 200), activation="relu")
-    # classifier = fit_algo(X_train, X_test, y_train,
-    #                      y_test, algotype="RidgeCV")
+    #plot(classifier, X_train, y_train, "train plot")
+    #plot(classifier, X_test, y_test, "test plot")
+    return classifier
 
-    k = KFold(n_splits=5, shuffle=False, random_state=42)
-    print(np.mean(cross_val_score(classifier, X_test, y_test, cv=k)),
-          classifier.predict(X_today), sep="\t")
 
-    print(X_train.shape, X_test.shape, y_train.shape, y_test.shape)
+def predict_all():
+    #2337, 2330, 6223, 6220
+    company_list = [2337, 2330, 6223, 2867]
+    clasifier_list = []
+    for i in company_list:
+        clasifier_list.append(fit_company(i))
+    return clasifier_list
 
-    plot(classifier, X_train, y_train, "train plot")
-    plot(classifier, X_test, y_test, "test plot")
+
+def main():
+    #2337, 2330, 6223, 6220
+    company_list = [2337, 2330, 6223, 2867]
+    clasifier_list = []
+    for i in company_list:
+        clasifier_list.append(fit_company(i))
+    fit_company_change(2337)
+    return clasifier_list
 
 
 if __name__ == "__main__":

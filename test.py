@@ -131,7 +131,7 @@ class MyWindow(Gtk.Window):
 
         self.f1 = Figure(figsize=(5, 4), dpi=100)
         self.a1 = self.f1.add_subplot(111)
-        x, y = predict.fit_company_change(6220)
+        x, y = predict.fit_company_change(6223)
         #print(x, y)
         predict.plotchange(self, list_all[2], x, y)
         self.box3.remove(self.sw1)

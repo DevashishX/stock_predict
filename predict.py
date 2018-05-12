@@ -109,19 +109,21 @@ def fit_company_change(name):
     X = X_close_index
     y = y_close_index
     X = nonlin_comp(X)
-    X = poly_pre(X, 5)
-    # X_train, X_test, y_train, y_test = train_test_split(
-    #   X, y, shuffle=False, stratify=None, test_size=0.001, random_state=42)
+    X = poly_pre(X, 4)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, shuffle=False, stratify=None, test_size=0.25, random_state=42)
     X_train = X_test = X
     X_today = X[-1:, :].reshape(-1, X.shape[1])
     X_train, X_test, X_today = scale_data(
-        X_train, X_test, X_today, "MinMax")
+        X_train, X_test, X_today, "StandardScaler")
     retx = X_train
-    #np.r_[X_test, X_train]
+    #retx = np.r_[X_train, X_test]
+    #rety = np.r_[y_train, y_test]
     # scaler = StandardScaler()
     # scaler.fit(X)
     # retx = scaler.transform(X)
-    return retx, y
+    rety = y
+    return retx, rety
 
 
 def fit_algo(X_train, X_test, y_train, y_test, algotype="Ridge"):
@@ -233,16 +235,16 @@ def fit_company(name):
     X = X_close_index
     y = y_close_index
     X = nonlin_comp(X)
-    X = poly_pre(X, 5)
+    X = poly_pre(X, 4)
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, shuffle=True, stratify=None, test_size=0.25, random_state=42)
+        X, y, shuffle=True, stratify=None, test_size=0.1, random_state=42)
     X_today = X[-1:, :].reshape(-1, X.shape[1])
     X_train, X_test, X_today = scale_data(
-        X_train, X_test, X_today, "MinMax")
-    # classifier = fit_neural_network(
-    #   X_train, X_test, y_train.ravel(), y_test.ravel(), network_structure=(10, 10), activation="relu")
-    classifier = fit_algo(X_train, X_test, y_train,
-                          y_test, algotype="RidgeCV")
+        X_train, X_test, X_today, "StandardScaler")
+    classifier = fit_neural_network(
+        X_train, X_test, y_train.ravel(), y_test.ravel(), network_structure=(10, 10, 10, 10), activation="relu")
+    # classifier = fit_algo(X_train, X_test, y_train,
+    #                      y_test, algotype="LinearRegression")
 
     #plot(classifier, X_train, y_train, "train plot")
     #plot(classifier, X_test, y_test, "test plot")

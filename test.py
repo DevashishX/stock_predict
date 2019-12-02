@@ -163,8 +163,9 @@ class MyWindow(Gtk.Window):
         pass
 
 
-list_all = predict.predict_all()
-win = MyWindow()
-win.connect("destroy", Gtk.main_quit)
-win.show_all()
-Gtk.main()
+if __name__ == "__main__":
+    list_all = predict.predict_all()
+    win = MyWindow()
+    win.connect("destroy", Gtk.main_quit)
+    win.show_all()
+    Gtk.main()

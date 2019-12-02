@@ -5,6 +5,7 @@ from twstock import Stock
 import os.path
 
 #n=int(input("enter years : "))
+
 today = dt.datetime.today()
 n_yrs_ago = today - dt.timedelta(days=3 * 365)
 
@@ -40,6 +41,7 @@ def conv_to_csv(df_close, df_index, df_close_index, ticker):
 def csv_to_df(name):
     state = "close"
     file_name_close = "{}_{}.csv".format(name, state)
+    # file_name_close = "{}_{}.csv".format(name, state)
     close = pd.read_csv(file_name_close, usecols=[1])
     index = pd.read_csv("index.csv", usecols=[1])
     file_name_ci = "{}_{}_{}.csv".format(name, state, "index")

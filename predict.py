@@ -86,7 +86,7 @@ def plot(classifier, X, y, title="data"):
     plt.show()
 
 
-def plotchange(Window, classifier, X, y, title="data"):
+def plotchange(Window, classifier, X, y, title="Model Vs Real"):
     # b: blue g: green r: red c: cyan m: magenta y: yellow k: black w: white
     l1 = Window.a1.plot(y, label='Real', color='b',
                         lw=1, ls='-', marker='+', ms=1.5, zorder=3)
@@ -117,17 +117,12 @@ def fit_company_change(name):
     X_train, X_test, X_today = scale_data(
         X_train, X_test, X_today, "StandardScaler")
     retx = X_train
-    #retx = np.r_[X_train, X_test]
-    #rety = np.r_[y_train, y_test]
-    # scaler = StandardScaler()
-    # scaler.fit(X)
-    # retx = scaler.transform(X)
     rety = y
     return retx, rety
 
 
 def fit_algo(X_train, X_test, y_train, y_test, algotype="Ridge"):
-    """fit the given algorithm to given data, returns an object or type classifier"""
+    """fit the given algorithm to given data, returns an object of type classifier"""
     train_list = []
     test_list = []
     print("using:", algotype)
@@ -241,13 +236,14 @@ def fit_company(name):
     X_today = X[-1:, :].reshape(-1, X.shape[1])
     X_train, X_test, X_today = scale_data(
         X_train, X_test, X_today, "StandardScaler")
-    classifier = fit_neural_network(
-        X_train, X_test, y_train.ravel(), y_test.ravel(), network_structure=(10, 10, 10, 10), activation="relu")
-    # classifier = fit_algo(X_train, X_test, y_train,
-    #                      y_test, algotype="LinearRegression")
-
-    #plot(classifier, X_train, y_train, "train plot")
-    #plot(classifier, X_test, y_test, "test plot")
+    # classifier = fit_neural_network(
+    #    X_train, X_test, y_train.ravel(), y_test.ravel(), network_structure=(10, 10, 10), activation="relu")
+    classifier = fit_algo(X_train, X_test, y_train,
+                          y_test, algotype="RidgeCV")
+    print("for ", str(name), " Todays's Price is: ",
+          str(classifier.predict(X_today)))
+    plot(classifier, X_train, y_train, "train plot")
+    plot(classifier, X_test, y_test, "test plot")
     return classifier
 
 
@@ -261,7 +257,7 @@ def predict_all():
 
 
 def main():
-    #2337, 2330, 6223, 6220
+    #2337, 2330, 6223, 2867
     company_list = [2337, 2330, 6223, 2867]
     clasifier_list = []
     for i in company_list:
